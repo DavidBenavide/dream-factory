@@ -1,0 +1,120 @@
+# *****************************************************************************************************
+# Dream Factory example prompt file (standard mode)
+# config settings go here (optionally) and will override any set in your global config file
+# *****************************************************************************************************
+[config]
+
+!MODE = standard						# standard mode; queue all possible prompt combos
+!REPEAT = yes							# repeat when all work finished (yes/no)?
+!DELIM = " "							# delimiter to use between prompt sections, default is space
+
+# in standard mode, you may put also embed any of the following config directives into 
+# the [prompt] sections below; they'll affect all prompts that follow the directive
+
+!WIDTH = 512							# output image width, default is 512
+!HEIGHT = 512							# output image height, default is 512
+!HIGHRES_FIX = no						# enable for images significantly larger than 512x512
+!STEPS = 20							# number of steps, more may improve image but increase generation time
+!SAMPLER = Euler						# sampler to use (create a new prompt file to see a reference list of options)
+!SCALE = 7.5							# guidance scale, increase for stricter prompt adherence
+!SAMPLES = 1							# number of images to generate per prompt
+!BATCH_SIZE = 1
+!INPUT_IMAGE = 						# can specify an input image here (output image will be same resolution)
+!STRENGTH = 0.75						# strength of input image influence (0-1, with 1 corresponding to least influence)
+!CKPT_FILE = 							# model to load (if not specified, defaults to config.txt)
+
+# optional integrated upscaling
+
+!USE_UPSCALE = no						# use ESRGAN to upscale output images?
+!UPSCALE_AMOUNT = 2.0					# upscaling factor
+!UPSCALE_CODEFORMER_AMOUNT = 0.0		# how visible codeformer enhancement is, 0 = off, 1 = full effect
+!UPSCALE_GFPGAN_AMOUNT = 0.0			# how visible gfpgan enhancement is, 0 = off, 1 = full effect
+!UPSCALE_KEEP_ORG = no				# keep the original non-upscaled image (yes/no)?
+
+# optional negative prompt
+
+!NEG_PROMPT = 
+
+# *****************************************************************************************************
+# prompt section
+# each of these items will be combined with all other items in all other [prompt] sections
+# see end of file for detailed explanation with examples
+# *****************************************************************************************************
+[prompts]
+
+a cute robot
+a portrait of a cat
+a beautiful landscape
+
+# *****************************************************************************************************
+# another prompt section
+# *****************************************************************************************************
+[prompts]
+
+, art by
+
+
+# *****************************************************************************************************
+# another prompt section
+# *****************************************************************************************************
+[prompts]
+
+Aleksi Briclot
+Alessio Albi
+Alex Horley-Orlandelli
+Alexander Jansson
+Alphonse Mucha
+Andreas Rocha
+Anna Dittmann
+Arthur Adams
+Ayami Kojima
+
+
+# *****************************************************************************************************
+# another prompt section
+# *****************************************************************************************************
+[prompts]
+
+,
+
+# *****************************************************************************************************
+# another prompt section
+# *****************************************************************************************************
+[prompts]
+
+ethereal
+full of details
+deviantart
+surrealism
+illustration
+digital painting
+muted colors
+
+
+# since we have 5 [prompt] sections, each with 3, 1, 9, 1, and 7 respective items (any embedded command 
+# directives don't count), we end up with a total of 189 possible combinations (3 x 1 x 9 x 7 = 189)
+# the resulting prompt queue will look like this:
+
+# a cute robot, art by Aleksi Briclot, ethereal
+# a portrait of a cat, art by Aleksi Briclot, ethereal
+# a beautiful landscape, art by Aleksi Briclot, ethereal
+# a cute robot, art by Alessio Albi, ethereal
+
+# ... and so on, for all 189 possibilities
+# be careful adding too many [prompt] sections with more than 1 item, as the 
+# increase in prompt combinations is exponential!
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+

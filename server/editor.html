@@ -1,0 +1,703 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dream Factory</title>
+    <link rel="shortcut icon" type="image/jpg" href="/static/img/favicon.ico"/>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+    <link href="/static/css/editor.css" rel="stylesheet">
+    <script src="/static/js/jquery-2.0.3.min.js"></script>
+    <script src="/static/js/quill.js"></script>
+    <script src="/static/js/shared.js"></script>
+    <script type="text/javascript">
+
+
+    $(document).ready(function() {
+        const prompt_dropdown = document.getElementById('prompt-select');
+        const samplers = document.getElementById('sampler_help_msg');
+        const models = document.getElementById('model_help_msg');
+        const hypernetworks = document.getElementById('hypernetwork_help_msg');
+        const loras = document.getElementById('lora_help_msg');
+        const wildcards = document.getElementById('wildcard_help_msg');
+        const embeddings = document.getElementById('embedding_help_msg');
+
+        const controlnetModels = document.getElementById('controlnet_model_help_msg');
+        const controlnetPres = document.getElementById('controlnet_pre_help_msg');
+        const controlnetPoses = document.getElementById('controlnet_poses_help_msg');
+
+        function loadDropdown() {
+            $.ajax({
+              type: "PROMPT_DROPDOWN_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              prompt_dropdown.innerHTML = string;
+            });
+        }
+
+        function loadSamplers() {
+            $.ajax({
+              type: "SAMPLER_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              samplers.innerHTML = string;
+            });
+        }
+
+        function loadModels() {
+            $.ajax({
+              type: "MODEL_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              models.innerHTML = string;
+            });
+        }
+
+        function loadLoras() {
+            $.ajax({
+              type: "LORA_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+                if (string == "none") {
+                    var ebtn = document.getElementById('help-loras');
+                    ebtn.style.display = "none";
+                } else {
+                    loras.innerHTML = string;
+                }
+            });
+        }
+
+        function loadWildcards() {
+            $.ajax({
+              type: "WILDCARD_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              wildcards.innerHTML = string;
+            });
+        }
+
+        function loadHyperNetworks() {
+            $.ajax({
+              type: "HYPERNETWORK_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+                if (string == "none") {
+                    var ebtn = document.getElementById('help-hypernetworks');
+                    ebtn.style.display = "none";
+                } else {
+                    hypernetworks.innerHTML = string;
+                }
+            });
+        }
+
+        function loadControlNetModels() {
+            $.ajax({
+              type: "CONTROLNET_MODEL_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+                if (string == "none") {
+                    var ebtn = document.getElementById('help-controlnet-models');
+                    ebtn.style.display = "none";
+                } else {
+                    controlnetModels.innerHTML = string;
+                }
+            });
+        }
+
+        function loadControlNetPres() {
+            $.ajax({
+              type: "CONTROLNET_PRE_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+                if (string == "none") {
+                    var ebtn = document.getElementById('help-controlnet-pres');
+                    ebtn.style.display = "none";
+                } else {
+                    controlnetPres.innerHTML = string;
+                }
+            });
+        }
+
+        function loadControlNetPoses() {
+            $.ajax({
+              type: "CONTROLNET_POSES_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+                if (string == "none") {
+                    var ebtn = document.getElementById('help-controlnet-poses');
+                    ebtn.style.display = "none";
+                } else {
+                    controlnetPoses.innerHTML = string;
+                }
+            });
+        }
+
+        function loadEmbeddings() {
+            $.ajax({
+              type: "EMBEDDING_REFERENCE_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              if (string == "none") {
+                  var ebtn = document.getElementById('help-embeddings');
+                  ebtn.style.display = "none";
+              } else {
+                  embeddings.innerHTML = string;
+              }
+            });
+        }
+
+        // just load these once per page load
+        loadDropdown();
+        loadSamplers();
+        loadModels();
+        loadHyperNetworks();
+        loadLoras();
+        loadWildcards();
+        loadEmbeddings();
+        loadControlNetModels();
+        loadControlNetPres();
+        loadControlNetPoses();
+    });
+
+    </script>
+  </head>
+  <body>
+    <div data-include="header"></div>
+
+    <div id="myModal" class="modal">
+      <div class="modal-editor-content" id="editor_msg">
+      </div>
+    </div>
+
+    <div id="helpModal" class="modal">
+      <div class="modal-help-buttons">
+          <div class="tooltip">
+              <button id="help-samplers" class="button-editor" onclick="help_content('sampler_help_msg')">Samplers</button>
+              <span class="tooltiptext">See sampers reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-models" class="button-editor" onclick="help_content('model_help_msg')">Models</button>
+              <span class="tooltiptext">See models reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-wildcards" class="button-editor" onclick="help_content('wildcard_help_msg')">Wildcards</button>
+              <span class="tooltiptext">See wildcards reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-embeddings" class="button-editor" onclick="help_content('embedding_help_msg')">Embeddings</button>
+              <span class="tooltiptext">See embeddings reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-hypernetworks" class="button-editor" onclick="help_content('hypernetwork_help_msg')">Hypernetworks</button>
+              <span class="tooltiptext">See hypernetwork reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-loras" class="button-editor" onclick="help_content('lora_help_msg')">LoRAs</button>
+              <span class="tooltiptext">See LoRA reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-controlnet-pres" class="button-cn-editor" onclick="help_content('controlnet_pre_help_msg')">ControlNet: Preprocessors</button>
+              <span class="tooltiptext">ControlNet:&#xa;see preprocessor reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-controlnet-models" class="button-cn-editor" onclick="help_content('controlnet_model_help_msg')">ControlNet: Models</button>
+              <span class="tooltiptext">ControlNet:&#xa;see model reference</span>
+          </div>
+          <div class="tooltip">
+              <button id="help-controlnet-poses" class="button-cn-editor" onclick="help_content('controlnet_poses_help_msg')">ControlNet: Poses</button>
+              <span class="tooltiptext">ControlNet:&#xa;see pose reference</span>
+          </div>
+      </div>
+      <div class="modal-help-row">
+        <div class="modal-help-content" id="modal-help-content">
+            Click one of the buttons above to reference its associated help.
+        </div>
+        <div class="modal-help-hidden" id="sampler_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="model_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="wildcard_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="embedding_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="hypernetwork_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="lora_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="controlnet_model_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="controlnet_pre_help_msg">
+        </div>
+        <div class="modal-help-hidden" id="controlnet_poses_help_msg">
+        </div>
+      </div>
+      <div class="modal-help-row" style="margin-top: 15px; margin-bottom: 50px; font-size: 14px; color: #888;">
+        (press escape to close this reference)
+      </div>
+    </div>
+
+    <div id="editor-panel" class="panel">
+
+        <div id="editor-title" class="panel-title">
+            Prompt Editor
+            <div class="tooltip">
+                <a href="https://github.com/rbbrdckybk/dream-factory#creating-and-editing-prompt-files" target="_blank"><img src="/static/img/help-icon-sm.png" class="edit-img" style="margin-top: -1px; margin-bottom: -2px; margin-left: 3px;"></a>
+                <span class="tooltiptext">Full documentation.&#xa;(opens in a new tab)</span>
+            </div>
+        </div>
+
+        <div id="editor-row" class="panel-row" style="justify-content: space-between;">
+          <div id="prompt-select" class="prompt-status">
+          </div>
+
+          <div id="top-toolbar" class="toolbar" style="padding-top: 9px;">
+              <div class="tooltip">
+                  <button id="new-random" class="button-editor">New Random</button>
+                  <span class="tooltiptext">Create a new prompt file.&#xa;(random mode)</span>
+              </div>
+
+              <div class="tooltip">
+                  <button id="new-standard" class="button-editor">New Standard</button>
+                  <span class="tooltiptext">Create a new prompt file.&#xa;(standard mode)</span>
+              </div>
+          </div>
+        </div>
+
+        <div class="panel-column" id="panel-editor" style="display: none;">
+
+            <div id="toolbar-container" class="toolbar-container">
+                <div id="toolbar-name" class="toolbar-name">
+                    <div class="tooltip">
+                        <input type="text" id="prompt-file-name" class="prompt-file-name" maxlength="100" value="test"></input>
+                        <span class="tooltiptext">The prompt filename.&#xa;Click to change.</span>
+                    </div>
+                    <button id="rename-button" class="button-editor" style="display: none; margin-bottom: 3px;">Rename</button>
+                </div>
+                <div id="toolbar" class="toolbar">
+                    <div class="tooltip">
+                        <button id="save-button" class="button-editor">Save</button>
+                        <span class="tooltiptext">Saves the prompt file.&#xa;(hotkey: ctrl+s)</span>
+                    </div>
+                    <div class="tooltip">
+                        <button id="delete-button" class="button-editor">Delete</button>
+                        <span class="tooltiptext">Permanently delete this file.</span>
+                    </div>
+                    <div class="tooltip">
+                        <img id="help-reference" src="/static/img/help-sm.png" class="edit-img" style="margin-top: -1px; margin-bottom: -1px; margin-right: 15px;" onclick="show_help_modal()">
+                        <span class="tooltiptext">Reference samplers/models&#xa;(hotkey: ctrl+h)</span>
+                    </div>
+                </div>
+            </div>
+
+            <div id="editor">
+            </div>
+        </div>
+
+    </div>
+    <div data-include="footer"></div>
+    <script type="text/javascript">
+
+    var maxchars = 80000;
+    function getEditorMaxChars() {
+        $.ajax({
+          type: "EDITOR_MAX_CHARS",
+          url: "/generator"
+        })
+        .done(function(string) {
+          maxchars = string;
+          //console.log('maxchars: ' + maxchars)
+        });
+    }
+    // janky way to do this but it should be fine
+    getEditorMaxChars();
+
+    function copyText(txt) {
+      // janky copy to clipboard that doesn't require https
+      var tempInput = document.createElement("input");
+      tempInput.style = "position: absolute; left: -1000px; top: -1000px";
+      tempInput.value = txt;
+      document.body.appendChild(tempInput);
+      tempInput.select();
+      document.execCommand("copy");
+      document.body.removeChild(tempInput);
+
+      hide_help_modal();
+    }
+
+    function help_content(which) {
+        var source = document.getElementById(which);
+        var dest = document.getElementById("modal-help-content");
+
+        dest.innerHTML = source.innerHTML;
+    }
+
+    function msg_modal(msg) {
+      var modal = document.getElementById("myModal");
+      var modalDiv = document.getElementById("editor_msg");
+
+      modal.style.display = "block";
+      modalDiv.innerHTML = msg;
+    }
+
+    function hide_msg_modal() {
+        var modal = document.getElementById("myModal");
+        modal.style.display = "none";
+    }
+
+    function show_help_modal() {
+      var modal = document.getElementById("helpModal");
+      modal.style.display = "block";
+    }
+
+    function hide_help_modal() {
+        var modal = document.getElementById("helpModal");
+        modal.style.display = "none";
+    }
+
+    var quill = new Quill('#editor', {
+        modules: {
+            toolbar: '#toolbar'
+        },
+        scrollingContainer: document.documentElement    // fix for paste jump issue
+    });
+
+    const newStandard = document.getElementById('new-standard');
+    const newRandom = document.getElementById('new-random');
+
+    newStandard.addEventListener('click', function() {
+        createFile('standard');
+    });
+    newRandom.addEventListener('click', function() {
+        createFile('random');
+    });
+
+    function createFile(type) {
+        var start = Date.now();
+        msg_modal("Creating, please wait...");
+        $.ajax({
+            type: "POST",
+            url: "/generator",
+            data: { "type": "prompt_editor_create", "arg": type}
+        })
+        .done(function(string) {
+            fname = string.split('|', 1)[0];
+            string = string.split('|', 2)[1];
+            renameField.value = fname;
+            renameButton.style.display = "none";
+            var dropdown = document.getElementById('prompt-file');
+            dropdown.selectedIndex = 0;
+            document.getElementById('panel-editor').style.display="flex";
+            quill.setText(string);
+            decorate_prompt_file_text();
+            quill.history.clear();
+            var elapsed = Date.now() - start;
+            if (elapsed > 1000) {
+                hide_msg_modal();
+            } else {
+                setTimeout(function() {
+                    hide_msg_modal();
+                }, 1000-elapsed);
+            }
+
+            $.ajax({
+              type: "PROMPT_DROPDOWN_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              document.getElementById('prompt-select').innerHTML = string;
+            });
+
+        });
+    }
+
+    const renameField = document.getElementById('prompt-file-name');
+    const renameButton = document.getElementById('rename-button');
+    renameField.addEventListener('input', function() {
+        if (renameField.value.length > 0) {
+            renameButton.style.display = "flex";
+        } else {
+            renameButton.style.display = "none";
+        }
+    });
+
+    renameButton.addEventListener('click', function() {
+        $.ajax({
+          type: "POST",
+          url: "/generator",
+          data: { "type": "prompt_editor_rename", "arg": renameField.value}
+        })
+        .done(function(string) {
+            if (string == "") {
+                // success, reload dropdown
+                $.ajax({
+                  type: "PROMPT_DROPDOWN_LOAD",
+                  url: "/generator"
+                })
+                .done(function(string) {
+                  document.getElementById('prompt-select').innerHTML = string;
+                });
+                // hide rename button
+                renameButton.style.display = "none";
+            } else {
+                msg_modal("Another file with that name already exists!");
+                setTimeout(function() {
+                    hide_msg_modal();
+                }, 2500);
+            }
+        });
+    });
+
+    const saveButton = document.getElementById('save-button');
+    saveButton.addEventListener('click', save);
+
+    document.addEventListener('keydown', e => {
+      if (e.ctrlKey && e.key === 's') {
+        e.preventDefault();
+        save();
+      }
+
+      if (e.ctrlKey && e.key === 'h') {
+        e.preventDefault();
+        show_help_modal("test");
+      }
+
+      if(event.key === "Escape"){
+         hide_help_modal();
+      }
+
+    });
+
+    function save() {
+        var allText = quill.getText();
+        if (allText === null || allText.trim() === "") {
+            // something happened
+            console.log('save attempt with nothing returned by editor');
+        } else {
+            var start = Date.now();
+            msg_modal("Saving...");
+            $.ajax({
+              type: "POST",
+              url: "/generator",
+              data: { "type": "prompt_editor_save", "arg": allText}
+            })
+            .done(function(string) {
+                var elapsed = Date.now() - start;
+                if (string == "") {
+                    if (elapsed > 1000) {
+                        hide_msg_modal();
+                    } else {
+                        setTimeout(function() {
+                            hide_msg_modal();
+                        }, 1000-elapsed);
+                    }
+                } else {
+                    msg_modal("Save failed, please try again!");
+                    setTimeout(function() {
+                        hide_msg_modal();
+                    }, 1500);
+                }
+            });
+        }
+    }
+
+    const deleteButton = document.getElementById('delete-button');
+    deleteButton.addEventListener('click', function() {
+        if (niceAlert("Really delete?", "This prompt file will be deleted forever!", "Deleted!", "", deleteFile) == true) {
+            // deleteFile function will be called if user confirms
+        }
+    });
+
+    function deleteFile() {
+        $.ajax({
+          type: "PROMPT_FILE_DELETE",
+          url: "/generator"
+        })
+        .done(function(string) {
+            // reload dropdown and reset page
+            $.ajax({
+              type: "PROMPT_DROPDOWN_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              document.getElementById('prompt-select').innerHTML = string;
+            });
+            renameButton.style.display = "none";
+            document.getElementById('panel-editor').style.display = "none";
+        });
+    }
+
+    quill.on('text-change', function(delta, oldDelta, source) {
+        if (source == 'user') {
+            delta.ops.forEach((op) => {
+                if (op.insert) {
+                    if (op.insert == ' ' || op.insert == '\n') {
+                        // only check on spacebar and enter
+                        decorate_line(op.insert);
+                    }
+                } else if (op.delete) {
+                    decorate_line();
+                }
+            });
+        }
+    });
+
+    function new_prompt_file() {
+      var start = Date.now();
+      msg_modal("Loading, please wait...");
+      var dropdown = document.getElementById('prompt-file');
+      new_file = dropdown.value;
+      if (new_file != "") {
+        $.ajax({
+          type: "POST",
+          url: "/generator",
+          data: { "type": "prompt_editor", "arg": new_file}
+        })
+        .done(function(string) {
+          renameField.value = dropdown.options[dropdown.selectedIndex].text;
+          renameButton.style.display = "none";
+          dropdown.selectedIndex = 0;
+          document.getElementById('panel-editor').style.display="flex";
+          // this is very slow with large amounts of text
+          // TODO look into alternatives
+          quill.setText(string);
+          decorate_prompt_file_text(maxchars);
+          quill.history.clear();
+          var elapsed = Date.now() - start;
+          if (elapsed > 1000) {
+              hide_msg_modal();
+          } else {
+              setTimeout(function() {
+                  hide_msg_modal();
+              }, 1000-elapsed);
+          }
+        });
+      }
+    }
+
+    function do_line_styling(line, line_start, last_char) {
+        if (line.trim()[0] == '!') {
+            pos = line.indexOf('=');
+            if (pos != -1) {
+                // regex would be better here but this works for now
+                before_equal = line.substring(line.indexOf('!'), line.indexOf('='));
+                if (before_equal.trim().indexOf(' ') == -1) {
+                    // this is a command directive
+                    // force uppercase on directive
+                    var range = quill.getSelection();
+                    upper = quill.getText(line_start, pos).toUpperCase();
+                    remainder = quill.getText(line_start + pos, line.length-pos);
+
+                    quill.deleteText(line_start, line.length);
+                    quill.insertText(line_start, upper + remainder);
+
+                    if (last_char == '\n') {
+                        setTimeout(() => quill.setSelection(line_start + line.length), 0);
+                    } else {
+                        setTimeout(() => quill.setSelection(range));
+                    }
+
+                    // add styling
+                    quill.formatText(line_start, pos, 'color', 'rgb(0, 150, 255)');
+                    quill.formatText(line_start, pos, 'bold', true);
+                    quill.formatText(line_start, pos, 'italic', false);
+                    quill.formatText(line_start, pos, 'code-block', true);
+                    // remove formatting after equal sign
+                    quill.removeFormat(line_start+pos, line.length-pos);
+                }
+            }
+        }
+
+        else if (line.trim()[0] == '[') {
+            pos = line.indexOf(']');
+            if (pos != -1) {
+                // this is a section header
+                quill.formatText(line_start, pos+1, 'color', 'rgb(255, 0, 0)');
+                quill.formatText(line_start, pos+1, 'background', 'rgb(220, 220, 0)');
+                quill.formatText(line_start, pos+1, 'bold', true);
+                quill.formatText(line_start, pos+1, 'italic', false);
+                // remove formatting after closing bracket
+                quill.removeFormat(line_start+pos+1, line.length-pos);
+            }
+        }
+
+        else {
+            // no formatting this line - this is slow
+            quill.removeFormat(line_start, line.length);
+        }
+
+        if (line.includes('#')) {
+            pos = line.indexOf('#');
+            if (pos != -1) {
+                // this is a comment
+                quill.formatText(line_start + pos, line.length-pos, 'color', 'rgb(140, 140, 140)');
+                quill.formatText(line_start + pos, line.length-pos, 'italic', true);
+                quill.formatText(line_start + pos, line.length-pos, 'bold', false);
+            }
+        }
+    }
+
+    function decorate_line(last_char = ' ') {
+        var range = quill.getSelection();
+        if (range) {
+            if (range.length >= 0) {
+              var loc = range.index;
+              text = quill.getText();
+              line = "";
+              var count = 0;
+              for (var char of text) {
+                  count++;
+                  line += char;
+                  if (char == '\n') {
+                      if (count > loc) {
+                          // user is on this line
+                          //console.log(line);
+                          var line_start = count - line.length;
+                          do_line_styling(line, line_start, last_char);
+                          break;
+                      } else {
+                          line = "";
+                      }
+                  }
+              }
+           }
+        }
+    }
+
+    function decorate_prompt_file_text(max_chars = 80000) {
+        text = quill.getText();
+        // don't attempt to stylize text over this char limit; it's too slow
+        if (text.length <= max_chars) {
+            line = "";
+            // total characters at the end of the last full line
+            var count_last_line = 0;
+            // characters on current line
+            var count = 0;
+
+            for (var char of text) {
+                count++;
+                if (char != '\n') {
+                    line += char;
+                } else {
+                    // end of line, check for styling
+                    line += '\n';
+                    do_line_styling(line, count_last_line);
+                    count_last_line += count;
+                    count = 0;
+                    line = "";
+                }
+            }
+        }
+    }
+
+    </script>
+  </body>
+</html>

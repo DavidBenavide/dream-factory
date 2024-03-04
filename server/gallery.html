@@ -1,0 +1,400 @@
+<!DOCTYPE html>
+<html>
+  <head>
+    <title>Dream Factory</title>
+    <link rel="shortcut icon" type="image/jpg" href="/static/img/favicon.ico"/>
+    <link href="https://fonts.googleapis.com/css2?family=Raleway:wght@400&display=swap" rel="stylesheet">
+    <link href="/static/css/style.css" rel="stylesheet">
+	<script src="/static/js/jquery-2.0.3.min.js"></script>
+    <script src="/static/js/shared.js"></script>
+    <script type="text/javascript">
+
+    function new_gallery_location() {
+      new_location = document.getElementById('gallery-location').value;
+      if (new_location != "") {
+        $.ajax({
+          type: "POST",
+          url: "/generator",
+          data: { "type": "gallery_location", "arg": new_location}
+        })
+        .done(function() {
+          if (document.getElementById('gallery-location').value == 'recent') {
+            document.getElementById('gallery-msg').innerHTML = 'You are viewing the most recently-created images.';
+            document.getElementById('zip-download').style.display="none";
+          } else {
+            var dd = document.getElementById('gallery-location');
+            if (dd.value == 'user_gallery') {
+              var txt = dd.options[dd.selectedIndex].text;
+              document.getElementById('gallery-msg').innerHTML = 'You are viewing images in \'' + txt + '\' (user-specified location in config.txt).';
+            } else {
+              document.getElementById('gallery-msg').innerHTML = 'You are viewing images in \'' + dd.value + '\'.';
+            }
+            document.getElementById('zip-download').style.display="block";
+          }
+
+          document.getElementById('gallery-location').selectedIndex = 0;
+
+          $.ajax({
+            type: "GALLERY_REFRESH",
+            url: "/generator"
+          })
+          .done(function(string) {
+            document.getElementById('gallery').innerHTML = string;
+          });
+        });
+      }
+
+    }
+
+    $(document).ready(function() {
+        const gallery_node = document.getElementById('gallery');
+        const gallery_dropdown = document.getElementById('gallery-dropdown');
+        const main_node = document.getElementById('main-page');
+        const load_msg = document.getElementById('load-msg');
+
+        function reloadGallery() {
+            $.ajax({
+              type: "GALLERY_REFRESH",
+              url: "/generator"
+            })
+            .done(function(string) {
+              gallery_node.innerHTML = string;
+              load_msg.style.display="none";
+              main_node.style.display="block";
+            });
+        }
+
+        function loadDropdown() {
+            $.ajax({
+              type: "GALLERY_DROPDOWN_LOAD",
+              url: "/generator"
+            })
+            .done(function(string) {
+              gallery_dropdown.innerHTML = string;
+            });
+        }
+
+        function setRefreshRate() {
+            $.ajax({
+              type: "GALLERY_REFRESH_RATE",
+              url: "/generator"
+            })
+            .done(function(string) {
+              gallery_timeout = setInterval(reloadGallery, 1000 * parseInt(string));
+            });
+        }
+
+        // just do these once per page load
+        setRefreshRate();
+        loadDropdown();
+
+        document.onload = reloadGallery();
+    });
+    </script>
+  </head>
+  <body>
+
+    <div data-include="header"></div>
+    <div id="load-msg" class="load-msg">
+        Connecting to Dream Factory; please wait...
+    </div>
+    <div id="main-page" style="display: none;">
+
+        <div id="myModal" class="modal">
+          <div id="img-toolbar" class="img-toolbar">
+              <div class="tooltip-bottom">
+                  <div><img id="left-img" src="/static/img/arrow-sm.png" class="edit-img" style="transform: scaleX(-1);"></div>
+                  <span class="tooltiptext-bottom">Previous image&#xa;(hotkey: left arrow)</span>
+              </div>
+              <div>
+                  <div class="tooltip-bottom">
+                      <a id="upscale-img">
+                          <img src="/static/img/upscale-sm.png" class="edit-img">
+                      </a>
+                      <span class="tooltiptext-bottom">Upscale this image.&#xa;(hotkey: u)</span>
+                  </div>
+
+                  <div class="tooltip-bottom">
+                      <a id="download-img" href="">
+                          <img src="/static/img/download-sm.png" class="edit-img">
+                      </a>
+                      <span class="tooltiptext-bottom">Download this image.</span>
+                  </div>
+
+                  <div class="tooltip-bottom">
+                      <img id="delete-img" src="/static/img/trash-sm.png" class="edit-img">
+                      <span class="tooltiptext-bottom">Delete this image.&#xa;(hotkey: delete)&#xa;Tip: use the hotkey to&#xa;skip confirmation dialog.</span>
+                  </div>
+
+                  <div class="tooltip-bottom">
+                      <img id="close-img" src="/static/img/close-sm.png" class="edit-img">
+                      <span class="tooltiptext-bottom">Close this window.&#xa;(hotkey: esc)</span>
+                  </div>
+              </div>
+              <div class="tooltip-bottom">
+                  <div><img id="right-img" src="/static/img/arrow-sm.png" class="edit-img"></div>
+                  <span class="tooltiptext-bottom">Next image&#xa;(hotkey: right arrow)</span>
+              </div>
+          </div>
+          <img class="modal-content" id="img01">
+          <div id="caption"></div>
+          <div id="neg_caption"></div>
+          <div id="subcaption"></div>
+        </div>
+
+        <div id="gallery-panel" class="panel">
+            <div id="gallery-title" class="panel-title">
+                Gallery
+            </div>
+
+            <div class="panel-row">
+              <div style="display: flex; flex-direction: column;">
+                <div id="gallery-msg" class="prompt-status">You are viewing the most recently-created images.</div>
+                <div id="gallery-dropdown" class="prompt-status"></div>
+              </div>
+              <div class="zip-download" id="zip-download">
+                <a href="/getzip">
+                  <img src="/static/img/download-zip-icon.png" title="download as .zip file" alt="download as .zip file">
+                </a>
+              </div>
+            </div>
+
+            <div id="gallery">
+            </div>
+
+        </div>
+
+    </div>
+    <div id="toast"></div>
+    <div data-include="footer"></div>
+
+    <script type="text/javascript">
+      var modal = document.getElementById("myModal");
+      var body = document.body;
+      var currentImage = "";
+      var imgList = null;
+
+      function img_modal(img_id, caption_id, subcaption_id) {
+        var modal = document.getElementById("myModal");
+        var img = document.getElementById(img_id);
+        var modalImg = document.getElementById("img01");
+        var captionText = document.getElementById("caption");
+        var negText = document.getElementById("neg_caption");
+        var subcaptionText = document.getElementById("subcaption");
+        var downloadLink = document.getElementById("download-img");
+        downloadLink.href = "/getimg?img=" + img.src;
+
+        modal.style.display = "block";
+        modalImg.src = img.src;
+        captionText.innerHTML = document.getElementById(caption_id).innerHTML;
+        negText.innerHTML = document.getElementById(caption_id.replace('d_', 'n_')).innerHTML;
+        subcaptionText.innerHTML = document.getElementById(subcaption_id).innerHTML;
+        body.style["overscroll-behavior"] = "contain"
+
+        refreshImageList();
+
+        // this breaks when there is an underscore in the filename
+        //currentImage = img_id.split('_', 2)[1];
+        currentImage = img_id.split(/_(.*)/s)[1];
+      }
+
+      function toast(msg) {
+        var x = document.getElementById("toast");
+        x.innerHTML = msg
+        x.className = "show";
+        setTimeout(function(){ x.className = x.className.replace("show", ""); }, 3000);
+      }
+
+      document.getElementById('delete-img').onclick = function() {
+          //deleteImage();
+          if (niceAlertQuick("Delete this image?", "Tip: if you accidentally delete an image, you may recover it in the 'server\\temp' folder BEFORE you shut the server down!", deleteImage) == true) {
+              // deleteImage function will be called if user confirms
+          }
+      }
+
+      function deleteImage() {
+          if (currentImage != "") {
+              next = nImage(currentImage);
+              src = document.getElementById("img01").src;
+
+              // send server request
+              $.ajax({
+                type: "POST",
+                url: "/generator",
+                data: { "type": "gallery_delete", "arg": src}
+              })
+              .done(function(string) {
+                  document.getElementById(currentImage).remove();
+                  if (next != "") {
+                      img_modal('i_' + next, 'd_' + next, 'p_' + next);
+                  } else {
+                      closeModal();
+                  }
+              });
+          }
+      }
+
+      document.getElementById('upscale-img').onclick = function() {
+          upscaleImage();
+      }
+
+      function upscaleImage() {
+        if (currentImage != "") {
+            src = document.getElementById("img01").src;
+            // send server request
+            $.ajax({
+              type: "POST",
+              url: "/generator",
+              data: { "type": "gallery_upscale", "arg": src}
+            })
+            .done(function(string) {
+              toast(string);
+            });
+        }
+      }
+
+      document.addEventListener('keydown', event => {
+      	if(event.key === "Escape"){
+      	   closeModal();
+      	}
+
+        if(event.key === "Delete"){
+            deleteImage();
+        }
+
+        if(event.key === "u"){
+            upscaleImage();
+        }
+
+        if(event.key === "ArrowLeft"){
+            event.preventDefault();
+            previousImage();
+        }
+
+        if(event.key === "ArrowRight"){
+            event.preventDefault();
+            nextImage();
+        }
+
+      });
+
+      let touchstartX = 0
+      let touchendX = 0
+      let touchstartY = 0
+      let touchendY = 0
+      let startTime = 0
+      let elapsedTime = 0
+
+      function checkSwipe() {
+        // swipes only checked if img model is visible and they occur in 0.25 sec or less
+        if (modal.style.display == "block" && elapsedTime <= 250) {
+            // ignore swipes under min distance
+            if (Math.abs(touchendY - touchstartY) > 200) {
+                // down
+                if (touchendY > touchstartY) {
+                    if (niceAlertQuick("Delete this image?", "Tip: if you accidentally delete an image, you may recover it in the 'server\\temp' folder BEFORE you shut the server down!", deleteImage) == true) {
+                        // deleteImage function will be called if user confirms
+                    }
+                }
+            } else {
+                if (Math.abs(touchendX - touchstartX) > 100) {
+                    // left
+                    if (touchendX < touchstartX) {
+                        nextImage();
+                    }
+                    // right
+                    if (touchendX > touchstartX) {
+                        previousImage();
+                    }
+                }
+            }
+        }
+      }
+
+      document.addEventListener('touchstart', e => {
+        touchstartX = e.changedTouches[0].screenX
+        touchstartY = e.changedTouches[0].screenY
+        startTime = new Date().getTime()
+      })
+
+      document.addEventListener('touchend', e => {
+        touchendX = e.changedTouches[0].screenX
+        touchendY = e.changedTouches[0].screenY
+        elapsedTime = new Date().getTime() - startTime
+        checkSwipe()
+      })
+
+      document.getElementById('left-img').onclick = function() {
+          previousImage();
+      }
+
+      function previousImage() {
+          if (currentImage != "") {
+              prev = pImage(currentImage);
+              if (prev != "") {
+                  img_modal('i_' + prev, 'd_' + prev, 'p_' + prev);
+              }
+          }
+      }
+
+      document.getElementById('right-img').onclick = function() {
+          nextImage();
+      }
+
+      function nextImage() {
+          if (currentImage != "") {
+              next = nImage(currentImage);
+              if (next != "") {
+                  img_modal('i_' + next, 'd_' + next, 'p_' + next);
+              }
+          }
+      }
+
+      document.getElementById('close-img').onclick = function() {
+          closeModal();
+      }
+
+      function closeModal() {
+          currentImage = "";
+          modal.style.display = "none";
+          body.style["overscroll-behavior"] = "auto"
+      }
+
+      function refreshImageList() {
+          imgList = document.getElementById("images").getElementsByTagName("li");
+          for (let i = 0; i < imgList.length; i++) {
+              let item = imgList[i];
+          }
+      }
+
+      function pImage(currImage) {
+          prev = "";
+          for (i = 0; i < imgList.length; i++) {
+              img = imgList[i].id;
+              if (img == currImage) {
+                  if (i-1 >= 0) {
+                      prev = imgList[i-1].id;
+                      break;
+                  }
+              }
+          }
+          return prev;
+      }
+
+      function nImage(currImage) {
+          next = "";
+          for (i = 0; i < imgList.length; i++) {
+              img = imgList[i].id;
+              if (img == currImage) {
+                  if (i+1 < imgList.length) {
+                      next = imgList[i+1].id;
+                      break;
+                  }
+              }
+          }
+          return next;
+      }
+
+    </script>
+  </body>
+</html>
